@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TAI ƯƠNG - LỜI NGUYỀN NGÔI ĐỀN</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            color: #eee;
+            background: #030405;
+            font-family: 'Courier New', Courier, monospace;
+            overflow: hidden;
+            user-select: none;
+        }
+        #scene {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(ellipse at 50% 35%, #33221b 0%, transparent 50%), linear-gradient(#05070a, #120c0a 60%, #010101);
+            transition: 1.2s ease;
+        }
+        /* Hiệu ứng sương mù & nhiễu phim kinh dị */
+        #scene::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, #000c, transparent 20%, transparent 80%, #000c), linear-gradient(0deg, #000c, transparent 60%);
+            pointer-events: none;
+        }
+        #scene::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.15) 3px, rgba(0,0,0,0.15) 4px);
+            pointer-events: none;
+        }
+        .temple {
+            position: absolute;
+            left: 50%;
+            top: 12%;
+            transform: translateX(-50%);
+            width: 70%;
+            height: 55%;
+            background: linear-gradient(90deg, #0d0a08, #523f2d, #0d0a08);
+            clip-path: polygon(50% 0%, 100% 20%, 88% 20%, 88% 30%, 100% 38%, 100% 48%, 0% 48%, 0% 38%, 12% 30%, 12% 20%, 0% 20%);
+            opacity: 0.8;
+            filter: drop-shadow(0 0 30px #000);
+            transition: 1s;
+        }
+        .statue {
+            position: absolute;
+            top: 25%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: clamp(90px, 18vw, 170px);
+            color: #b99a69;
+            text-shadow: 0 0 25px #d17b26, 0 0 50px #500;
+            opacity: 0.75;
+            transition: 0.5s;
+        }
+        /* Ngôi sao chỉ dẫn */
+        .star {
+            position: absolute;
+            top: 52%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 50px;
+            color: #ffe995;
+            text-shadow: 0 0 15px white, 0 0 40px gold;
+            animation: pulseStar 1.2s infinite alternate;
+            cursor: pointer;
+            z-index: 3;
+        }
+        @keyframes pulseStar {
+            from { filter: brightness(0.5); transform: translate(-50%, -50%) scale(0.8); }
+            to { filter: brightness(2); transform: translate(-50%, -50%) scale(1.25); }
+        }
+        #menu, #ending {
+            position: fixed;
+            inset: 0;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            text-align: center;
+            background: rgba(2, 3, 5, 0.96);
+            padding: 20px;
+        }
+        h1 { color: #a90000; font-size: clamp(32px, 7vw, 70px); letter-spacing: 6px; text-shadow: 0 0 25px red; margin: 10px 0; }
+        h2 { color: #d2b48c; letter-spacing: 2px; }
+        button {
+            background: #5c0d0d;
+            color: white;
+            border: 1px solid #b87333;
+            padding: 12px 25px;
+            margin: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-family: 'Courier New', Courier, monospace;
+            transition: 0.2s;
+        }
+        button:hover { background: #941b1b; box-shadow: 0 0 15px #a90000; }
+        #hud {
+            position: fixed;
+            top: 15px; left: 15px; right: 15px;
+            display: flex;
+            justify-content: space-between;
+            z-index: 5;
+            text-shadow: 0 2px 8px black;
+            font-weight: bold;
+        }
+        #mission {
+            position: fixed;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: min(650px, 94%);
+            background: rgba(10, 8, 7, 0.92);
+            border: 1px solid #6b4c35;
+            padding: 15px;
+            text-align: center;
+            z-index: 6;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+        }
+        #question { font-size: 17px; color: #f1d9b2; margin: 10px 0; }
+        #answers { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; }
+        #hintBox { display: none; color: #ffe69b; margin-top: 8px; font-style: italic; }
+        
+        /* Màn hình hù dọa Jump-scare */
+        #scare {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 30;
+            background: radial-gradient(circle, #991111 0%, #050000 70%);
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            text-align: center;
+            animation: shakeScare 0.1s infinite;
+        }
+        @keyframes shakeScare {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(12px, -8px) rotate(-2deg); }
+            50% { transform: translate(-10px, 10px) rotate(2deg); }
+            75% { transform: translate(8px, 6px) rotate(-1deg); }
+            100% { transform: translate(0, 0); }
+        }
+        #scare .face { font-size: clamp(120px, 35vw, 280px); }
+        #scare h1 { color: white; text-shadow: 0 0 30px black; }
+
+        /* Màn truy đuổi cuối */
+        #chase {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 15;
+            background: rgba(30, 5, 5, 0.95);
+            text-align: center;
+            padding: 20px;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        #flash {
+            position: fixed;
+            inset: 0;
+            background: white;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 25;
+            transition: opacity 0.05s;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="scene">
+        <div class="temple"></div>
+        <div class="statue" id="statue">🗿</div>
+        <div class="star" onclick="triggerHint()" title="Chạm để nhận gợi ý từ đốm sáng">✦</div>
+    </div>
+    <div id="flash"></div>
+
+    <!-- MENU CHÍNH -->
+    <div id="menu">
+        <h1>TAI ƯƠNG</h1>
+        <h2>LỜI NGUYỀN NGÔI ĐỀN</h2>
+        <p style="color: #bbb; max-width: 500px; line-height: 1.6;">
+            Ngôi đền cổ Thái Lan bỏ hoang hàng trăm năm. Không một ai bước vào mà tìm được lối ra... Hãy đi theo ánh sáng chỉ dẫn, giải các câu đố và bảo toàn mạng sống.
+        </p>
+        <button onclick="startGame()">BẮT ĐẦU KHÁM PHÁ</button>
+        <p style="font-size: 13px; color: #888; margin-top: 15px;">Mẹo: Nhấn vào biểu tượng ngôi sao ✦ ở giữa màn hình khi bạn bí mật.</p>
+    </div>
+
+    <!-- HUD THÔNG TIN -->
+    <div id="hud">
+        <div>
+            <div>✦ ĐIỂM: <span id="score">0</span></div>
+            <div id="areaName" style="color: #d2b48c;">KHU VỰC 1 - CỔNG ĐỀN</div>
+        </div>
+        <div>ĐÈN DẦU: <span id="light">100</span>%</div>
+    </div>
+
+    <!-- KHUNG NHIỆM VỤ & CÂU HỎI -->
+    <div id="mission">
+        <div id="missionTitle" style="color: #ff4d4d; font-weight: bold; font-size: 14px;">NHIỆM VỤ 1</div>
+        <div id="question">Đang tải câu đố...</div>
+        <div id="answers"></div>
+        <div id="hintBox"></div>
+        <button onclick="triggerHint()" style="margin-top: 10px; font-size: 13px; padding: 6px 15px;">✦ XIN GỢI Ý TỪ SAO</button>
+    </div>
+
+    <!-- MÀN HÌNH HÙ DỌA (JUMP-SCARE) -->
+    <div id="scare">
+        <div class="face" id="scareIcon">👹</div>
+        <h1 id="scareTitle">ĐỪNG QUAY ĐẦU LẠI!</h1>
+        <p id="scareDesc" style="color: #ffcccc; font-size: 18px;">Có thứ gì đó đang đứng ngay sau lưng bạn...</p>
+    </div>
+
+    <!-- MÀN TRUY ĐUỔI CUỐI (CHASE SCENE) -->
+    <div id="chase">
+        <h1 style="color: #ff3333; font-size: clamp(30px, 6vw, 60px);">CHẠY NGAY ĐI!</h1>
+        <div style="font-size: 110px; animation: pulseStar 0.4s infinite alternate;">👹</div>
+        <p style="color: #ffcccc; font-size: 18px;">TƯỢNG THẦN KHỔNG LỒ ĐANG LAO ĐẾN NUỐT CHỬNG BẠN!</p>
+        <h2 id="chaseCount" style="font-size: 28px; color: gold;">0 / 8</h2>
+        <button onclick="runFast()" style="font-size: 22px; padding: 18px 35px; background: #8b0000; border-color: #ff4d4d;">🏃 NHẤN LIÊN TỤC ĐỂ CHẠY THOÁT!</button>
+        <p style="font-size: 13px; color: #aaa;">Đập liên tục vào nút chạy trước khi bóng tối bao trùm!</p>
+    </div>
+
+    <!-- MÀN HÌNH KẾT THÚC CHIẾN THẮNG -->
+    <div id="ending" style="display:none;">
+        <h1 style="color: #4eff4e;">THOÁT KHỎI LỜI NGUYỀN</h1>
+        <h2>BẠN ĐÃ SỐNG SÓT!</h2>
+        <p style="color: #ccc; max-width: 450px;">Bạn đã vượt qua các thử thách kinh hoàng của ngôi đền. Nhưng trong bóng tối, đôi mắt đỏ ngầu vẫn đang dõi theo từng bước chân bạn...</p>
+        <h2>TỔNG ĐIỂM: <span id="finalScore">0</span></h2>
+        <button onclick="location.reload()">CHƠI LẠI TỪ ĐẦU</button>
+    </div>
+
+    <script>
+        // Cấu trúc 4 khu vực theo yêu cầu
+        const stages = [
+            {
+                name: "KHU VỰC 1 – CỔNG ĐỀN",
+                bg: "radial-gradient(ellipse at 50% 35%, #1a2634 0%, transparent 60%), linear-gradient(#061018, #171b17 55%, #080605)",
+                statue: "🗿",
+                title: "Rừng rậm, tượng đá & Cổng đền cổ",
+                q: "Cổng đền bị khoá bằng cơ chế cổ đại. Trên cánh cổng chạm khắc câu hỏi: 'Một ngày có bao nhiêu giờ để con người đối mặt với bóng đêm?'",
+                answers: ["12 giờ", "24 giờ", "36 giờ", "48 giờ"],
+                correct: 1,
+                hint: "Thời gian một vòng quay Trái Đất gồm cả ngày và đêm.",
+                clue: "Ngôi sao sáng chiếu vào con số quen thuộc của một ngày đêm.",
+                wrong: "CỔNG ĐỀN PHÁT RA TIẾNG THÉT GHÊ RỢN!"
+            },
+            {
+                name: "KHU VỰC 2 – SÂN ĐỀN",
+                bg: "radial-gradient(ellipse at 50% 35%, #492b1a 0%, transparent 60%), linear-gradient(#111018, #493126 55%, #070504)",
+                statue: "🛕",
+                title: "Tượng thần hộ pháp, đèn dầu & sương mù",
+                q: "Sương mù mịt mờ, bạn phải thắp đúng ngọn đèn dầu giữa các bức tượng hộ pháp. Hãy chọn số nằm chính giữa dãy số: 1, 2, 3.",
+                answers: ["Số 1", "Số 2", "Số 3", "Số 0"],
+                correct: 1,
+                hint: "Số đứng giữa trong dãy số tự nhiên liên tiếp từ 1 đến 3.",
+                clue: "Đốm sáng đang lơ lửng soi rọi vào chiếc đèn chính giữa.",
+                wrong: "TƯỢNG THẦN HỘ PHÁP ĐỘNG ĐỊNH, ĐÈN DẦU DẬP TẮT!"
+            },
+            {
+                name: "KHU VỰC 3 – HÀNH LANG",
+                bg: "radial-gradient(ellipse at 50% 35%, #420b13 0%, transparent 60%), linear-gradient(#160507, #420b13 55%, #030203)",
+                statue: "👤",
+                title: "Hành lang ánh đèn đỏ & Bóng ma bất ngờ",
+                q: "Hành lang ngập ánh đèn đỏ rợn tóc gáy. Trên vách tường rỉ máu có 4 ký hiệu cổ: [▲] [★] [●] [■]. Ký hiệu nào tượng trưng cho Ngôi sao sáng dẫn đường?",
+                answers: ["▲", "★", "●", "■"],
+                correct: 1,
+                hint: "Ký hiệu có các cánh nhọn tỏa sáng giống ngôi sao trên trời.",
+                clue: "Ngôi sao dẫn đường đang nhấp nháy ngay trên ký hiệu đó.",
+                wrong: "BÓNG MA LAO RA TỪ GÓC TỐI HÙ DỌA BẠN!"
+            },
+            {
+                name: "KHU VỰC 4 – ĐIỆN THỜ",
+                bg: "radial-gradient(ellipse at 50% 35%, #380d0d 0%, transparent 60%), linear-gradient(#09070b, #291a16 55%, #030203)",
+                statue: "👹",
+                title: "Điện thờ tượng thần khổng lồ",
+                q: "Phép tính cuối cùng để phong ấn lời nguyền trước khi bức tượng thần khổng lồ tỉnh giấc: 5 + 7 × 2 = ?",
+                answers: ["24", "19", "17", "14"],
+                correct: 1,
+                hint: "Theo quy tắc toán học, hãy thực hiện phép nhân trước rồi mới cộng.",
+                clue: "Ngôi sao sáng rực chỉ thẳng vào kết quả 19.",
+                wrong: "TƯỢNG THẦN KHỔNG LỒ THỨC GIẤC, ĐUỔI THEO SÁT GÓT!"
+            }
+        ];
+
+        let currentStage = 0;
+        let score = 0;
+        let light = 100;
+        let scareTimeout;
+
+        function startGame() {
+            document.getElementById("menu").style.display = "none";
+            currentStage = 0;
+            score = 0;
+            light = 100;
+            loadStage();
+        }
+
+        function loadStage() {
+            let s = stages[currentStage];
+            document.getElementById("scene").style.background = s.bg;
+            document.getElementById("statue").textContent = s.statue;
+            document.getElementById("areaName").textContent = s.name;
+            document.getElementById("missionTitle").textContent = `NHIỆM VỤ ${currentStage + 1} - ${s.title}`;
+            document.getElementById("question").textContent = s.q;
+            document.getElementById("hintBox").style.display = "none";
+            document.getElementById("score").textContent = score;
+            document.getElementById("light").textContent = light;
+
+            let ansDiv = document.getElementById("answers");
+            ansDiv.innerHTML = "";
+            s.answers.forEach((ans, index) => {
+                let btn = document.createElement("button");
+                btn.textContent = ans;
+                btn.onclick = () => checkAnswer(index);
+                ansDiv.appendChild(btn);
+            });
+        }
+
+        function triggerHint() {
+            if (currentStage < stages.length) {
+                let hintBox = document.getElementById("hintBox");
+                hintBox.style.display = "block";
+                hintBox.textContent = "✦ " + stages[currentStage].clue + " (Gợi ý phụ: " + stages[currentStage].hint + ")";
+                light = Math.max(0, light - 5);
+                document.getElementById("light").textContent = light;
+            }
+        }
+
+        function checkAnswer(selectedIndex) {
+            let s = stages[currentStage];
+            if (selectedIndex === s.correct) {
+                score += 250;
+                document.getElementById("score").textContent = score;
+                triggerFlash();
+                
+                // Hiệu ứng đúng qua màn nhẹ nhàng
+                showScare(false, "ĐÚNG RỒI! BƯỚC TIẾP THÔI...", "✨");
+                
+                setTimeout(() => {
+                    currentStage++;
+                    if (currentStage < stages.length) {
+                        loadStage();
+                    } else {
+                        startChaseScene();
+                    }
+                }, 1000);
+            } else {
+                light = Math.max(0, light - 20);
+                document.getElementById("light").textContent = light;
+                showScare(true, s.wrong, currentStage === 2 ? "👻" : "👹");
+            }
+        }
+
+        function showScare(isWrong, message, icon) {
+            let scare = document.getElementById("scare");
+            document.getElementById("scareIcon").textContent = icon;
+            document.getElementById("scareTitle").textContent = isWrong ? "CẢNH BÁO NGUY HIỂM!" : "ĐÃ GIẢI ĐƯỢC MẬT MÃ!";
+            document.getElementById("scareDesc").textContent = message;
+            scare.style.display = "flex";
+            triggerFlash();
+
+            clearTimeout(scareTimeout);
+            scareTimeout = setTimeout(() => {
+                scare.style.display = "none";
+            }, isWrong ? 1300 : 700);
+        }
+
+        function triggerFlash() {
+            let flash = document.getElementById("flash");
+            flash.style.opacity = "0.7";
+            setTimeout(() => { flash.style.opacity = "0"; }, 80);
+        }
+
+        // Màn truy đuổi cuối cùng (Khu vực 4 - Chạy trốn tượng thần)
+        let runCount = 0;
+        function startChaseScene() {
+            document.getElementById("mission").style.display = "none";
+            document.getElementById("chase").style.display = "flex";
+            runCount = 0;
+            document.getElementById("chaseCount").textContent = `${runCount} / 8`;
+        }
+
+        function runFast() {
+            runCount++;
+            document.getElementById("chaseCount").textContent = `${runCount} / 8`;
+            triggerFlash();
+
+            if (runCount >= 8) {
+                document.getElementById("chase").style.display = "none";
+                document.getElementById("ending").style.display = "flex";
+                document.getElementById("finalScore").textContent = score + 500;
+            }
+        }
+
+        // Hiệu ứng chớp sấm chớp ngẫu nhiên tạo cảm giác kinh dị
+        setInterval(() => {
+            if (Math.random() < 0.15) {
+                let flash = document.getElementById("flash");
+                flash.style.opacity = "0.4";
+                setTimeout(() => { flash.style.opacity = "0"; }, 60);
+            }
+        }, 3000);
+    </script>
+</body>
+</html>
